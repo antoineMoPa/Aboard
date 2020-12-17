@@ -6,7 +6,9 @@ Docker is a nice way to create a local development environment, especially with 
 
 # Installation
 
-TODO
+The first linux pre-release is available here with instructions:
+
+https://github.com/antoineMoPa/Aboard/releases/tag/0.1.0
 
 # Examples
 
