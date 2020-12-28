@@ -1,8 +1,8 @@
 # Aboard
-Get inside a container as current user to avoid wrecking file permissions.
+Get inside docker containers quickly.
 
 # Introduction
-Docker is a nice way to create a local development environment, especially with mounted volumes. However, since commands in Docker are run as root by default, any file created during a shell session with `docker exec` will be owned by root. This can be annoying with database migration scripts and code generators.
+Aboard allows you to start a shell inside a container by name or by ID. Unlike docker exec, a user matching your username is created automatically so you can create files in mounted volumes and these files will still be accessible to your current user.
 
 # Installation
 
