@@ -17,6 +17,12 @@ async fn main() {
                 .help("Container image name or container ID")
                 .takes_value(true),
         )
+        .arg(Arg::with_name("root")
+                 .short("r")
+                 .long("root")
+                 .required(false)
+                 .takes_value(false)
+                 .help("Launch shell with superuser."))
         .get_matches();
 
     let container_name_or_id = matches.value_of("container").unwrap();
@@ -33,7 +39,7 @@ async fn main() {
     // Verify if there is a match in the container ids first
     for container in containers_list.iter() {
         if container.id.contains(container_name_or_id) {
-            shell_in_container(container.id.clone());
+            shell_in_container(container.id.clone(), matches.is_present("root"));
             return ();
         }
     }
@@ -41,16 +47,16 @@ async fn main() {
     // If no container was found using the ID, look for image names
     for container in containers_list.iter() {
         if container.image.contains(container_name_or_id) {
-            shell_in_container(container.id.clone());
+            shell_in_container(container.id.clone(), matches.is_present("root"));
             return ();
         }
     }
 }
 
-fn shell_in_container(id: String) {
+fn shell_in_container(id: String, as_root: bool) {
     let uid = get_current_uid();
     let user = get_user_by_uid(uid).unwrap();
-    let username = user.name().to_str().unwrap();
+    let mut username = user.name().to_str().unwrap();
 
     println!(
         "{} {} {}",
@@ -59,25 +65,29 @@ fn shell_in_container(id: String) {
         "to container...".blue()
     );
 
-    // Create user in container
-    let out = subprocess::Exec::cmd("docker")
-        .arg("exec")
-        .arg("-it")
-        .arg(id.clone())
-        .arg("/bin/sh")
-        .arg("-c")
-        .arg(format!(
-            "adduser --disabled-password --gecos GECOS \"{}\"",
-            username
-        ))
-        .stdout(Redirection::Pipe)
-        .stderr(Redirection::Merge)
-        .capture();
+    if as_root {
+        username = "root";
+    } else {
+        // Create user in container
+        let out = subprocess::Exec::cmd("docker")
+            .arg("exec")
+            .arg("-it")
+            .arg(id.clone())
+            .arg("/bin/sh")
+            .arg("-c")
+            .arg(format!(
+                "adduser --disabled-password --gecos GECOS \"{}\"",
+                username
+            ))
+            .stdout(Redirection::Pipe)
+            .stderr(Redirection::Merge)
+            .capture();
 
-    match out {
-        Ok(_) => (),
-        Err(_) => panic!("Could not create user!"),
-    };
+        match out {
+            Ok(_) => (),
+            Err(_) => panic!("Could not create user!"),
+        };
+    }
 
     println!("{} {}", "Launching /bin/sh in container".blue(), id);
 
