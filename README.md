@@ -28,5 +28,9 @@ Go inside backend, with container id instead of image name:
 
     aboard 0929084a
     # run commands in backend
-    
+
+Go inside container, as root:
+
+    aboard frontend --root
+
 Type `CTRL+D` or `exit` to exit.
